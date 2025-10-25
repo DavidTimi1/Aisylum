@@ -125,7 +125,9 @@
   }
 }
 
-body {  
+body {
+  overscroll-behavior-y: contain;
+
   font-family: "Lora", serif;
   font-optical-sizing: auto;
   font-weight: 400;

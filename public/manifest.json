@@ -1,27 +1,25 @@
 {
-  "short_name": "MSG50",
-  "name": "Message50 - E2EE Chat App",
-  "description": "Message50 is a secure and private chat application that uses end-to-end encryption to protect your messages. With Message50, you can chat with friends and family without worrying about your privacy.",
+  "id": "Aisylum-webapp",
+  "short_name": "Aisylum",
+  "name": "Aisylum",
+  "description": "Private, secure, offline-ready AI tools for everyone.",
   "icons": [
     {
-      "src": "/logo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "/logo512.png",
+      "src": "/images/logo512.png",
       "type": "image/png",
       "sizes": "512x512"
+    },
+    {
+       "src": "/images/512-maskable.png",
+       "type": "image/png",
+       "sizes": "512x512",
+       "purpose": "maskable"
     }
   ],
-  "start_url": "/app",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "theme_color": "#030508",
-  "background_color": "#030508",
-  "related_applications": [{
-    "platform": "webapp",
-    "url": "https://message50-frontend.vercel.app/manifest.json"
-  }],
+  "theme_color": "gray",
+  "background_color": "gray",
   "prefer_related_applications": false
 }
