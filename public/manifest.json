@@ -1,0 +1,27 @@
+{
+  "short_name": "MSG50",
+  "name": "Message50 - E2EE Chat App",
+  "description": "Message50 is a secure and private chat application that uses end-to-end encryption to protect your messages. With Message50, you can chat with friends and family without worrying about your privacy.",
+  "icons": [
+    {
+      "src": "/logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#030508",
+  "background_color": "#030508",
+  "related_applications": [{
+    "platform": "webapp",
+    "url": "https://message50-frontend.vercel.app/manifest.json"
+  }],
+  "prefer_related_applications": false
+}
