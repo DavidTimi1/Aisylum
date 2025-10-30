@@ -159,7 +159,6 @@ const Dashboard = () => {
   };
 
   return (
-    // Main container: bg-background
     <div className="min-h-screen bg-background transition-colors duration-300">
 
       {/* Main Content */}
@@ -173,21 +172,21 @@ const Dashboard = () => {
             Your private AI assistant for support and information.
           </p>
           <div className="w-max mx-auto max-w-full">
-          <div className="bg-primary/20 border border-primary/40 rounded-xl p-4 flex items-center gap-3">
-            <div className="w-5 h-5 flex items-center justify-center relative">
-              <Shield className='w-6 h-6 scale-150 relative' />
-              <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                <BotIcon className='w-4 h-4' />
-              </span>
+            <div className="bg-primary/20 border border-primary/40 rounded-xl p-4 flex items-center gap-3">
+              <div className="w-5 h-5 flex items-center justify-center relative">
+                <Shield className='w-6 h-6 scale-150 relative' />
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                  <BotIcon className='w-4 h-4' />
+                </span>
+              </div>
+              <p className="text-sm text-foreground">
+                <span className="font-semibold">Always Private & Offline.</span> {' '}
+                Your data never leaves this device. {' '}
+                <CustomTooltip>
+                  Using Gemini Nano
+                </CustomTooltip>
+              </p>
             </div>
-            <p className="text-sm text-foreground">
-              <span className="font-semibold">Always Private & Offline.</span> {' '}
-              Your data never leaves this device. {' '}
-              <CustomTooltip>
-                Using Gemini Nano
-              </CustomTooltip>
-            </p>
-          </div>
           </div>
         </div>
 

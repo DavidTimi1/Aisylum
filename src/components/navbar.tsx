@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 const navigation = [
     { name: "Dashboard", to: "/", icon: LayoutDashboardIcon },
     { name: "AI Chat", to: "/chat", icon: MessageSquare },
-    { name: "Advocate's Pen", to: "/editor", icon: FileEdit },
+    { name: "Documents", to: "/documents", icon: FileEdit },
     { name: "Language Tools", to: "/language", icon: LanguagesIcon },
 ];
 

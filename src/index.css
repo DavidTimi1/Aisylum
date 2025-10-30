@@ -134,11 +134,16 @@ body {
   font-style: normal;
 }
 
-.montserrat-font {
+.montserrat-font, .montserrat-font-normal {
   font-family: "Montserrat", sans-serif;
   font-optical-sizing: auto;
   font-weight: 600;
   font-style: normal;
+}
+
+
+.montserrat-font-normal {
+  font-weight: 500;
 }
 
 .lora-font {
