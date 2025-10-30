@@ -31,11 +31,15 @@ self.addEventListener('install', (event) => {
   );
 });
 
+const DEVMODE = import.meta.env === 'development';
 
 // Fetch event handler
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const requestUrl = new URL(request.url);
+
+  // Skip WebSocket handshake requests (Vite uses ?token=...)
+  if ( DEVMODE && requestUrl.searchParams.has('token')) return;
 
   // Bypass the service worker for all API requests
   if (requestUrl.pathname.startsWith(BACKEND_API_PREFIX)) {
@@ -66,9 +70,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     (async () => {
       const cachedResponse = await caches.match(request);
-      if (cachedResponse) {
-        return cachedResponse;
-      }
+      if (cachedResponse) return cachedResponse;
 
       try {
         const networkResponse = await fetch(request);
@@ -90,6 +92,7 @@ self.addEventListener('fetch', (event) => {
     })()
   );
 });
+
 
 
 self.addEventListener('activate', (event) => {
