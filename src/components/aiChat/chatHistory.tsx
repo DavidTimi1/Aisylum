@@ -21,8 +21,10 @@ export const ChatHistory = forwardRef<triggerHandler>((props, ref) => {
   const timePast = (date: Date) => formatDistanceToNow(date, { addSuffix: true });
 
   useEffect(() => {
-    handleNewChat();
-  }, []);
+    if (!loading){
+      handleNewChat();
+    }
+  }, [loading]);
 
   // Expose functions to parent via ref
   useImperativeHandle(ref, () => ({
@@ -143,10 +145,8 @@ export const ChatHistory = forwardRef<triggerHandler>((props, ref) => {
   
   function handleDeleteChat(id, e){
     e.stopPropagation();
-    if (activeChat === id) {
-      setActiveChat(undefined);
-    }
     deleteChat(id);
+    handleNewChat();
   };
 
 });
