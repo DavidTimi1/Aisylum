@@ -1,8 +1,8 @@
 import { SendIcon } from "lucide-react"
 
-export const MessageList = ({messages}) => {
+export const MessageList = ({messages, noPlaceholder}) => {
     return (
-        messages.length === 0 ? (
+        messages.length === 0 && !noPlaceholder ? (
             <div className="flex items-center justify-center h-full">
                 <div className="text-center space-y-3 max-w-md">
                     <div className="h-16 w-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto">
