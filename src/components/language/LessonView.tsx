@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { languageModules } from "@/lib/languageModules";
-import { useLanguageStore } from "@/stores/languageStore";
+import { generateModuleLessons, useLanguageStore } from "@/stores/languageStore";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import useActivityStore from "@/stores/activityStore";
+import { errorToast } from "@/hooks/use-toast";
 
 export default function LessonView() {
     const [lesson, setLesson] = useState<{ question: string; type: "speech" | "written"; answer: string }[]>([]);
@@ -10,6 +12,7 @@ export default function LessonView() {
     const { selectedLanguage, languages, updateProgress } = useLanguageStore();
     const currentModule = languages.find((l) => l.languageCode === selectedLanguage)?.currentModule;
     const [showAllModules, setShowAllModules] = useState(false);
+    const { addLanguageActivity } = useActivityStore();
 
     useEffect(() => {
         if (currentModule) {
@@ -30,12 +33,13 @@ export default function LessonView() {
             {
                 lesson.length === 0 ? (
                     <p className="text-sm text-foreground/60">No lesson available. Select a language to start learning.</p>
+
                 ) : (
                     <div className="space-y-4">
                         {
                             lesson.map((item, idx) => (
                                 <div key={idx} className="p-3 bg-background/50 border border-foreground/10 rounded-lg">
-                                    <p className="text-foreground">{item.question}</p>
+                                    <p className="text-foreground">{idx + 1}. {item.question}</p>
 
                                     {item.type === "speech" && (
                                         <p className="text-sm text-primary mt-2">[Speech Practice Required]</p>
@@ -49,12 +53,12 @@ export default function LessonView() {
                         </Button>
                         <div className="flex w-full justify-between items-center gap-3 mt-20">
                             <Button variant="outline" onClick={checkPreviousLesson}>
-                                <ChevronLeftIcon className="w-4 h-4" /> 
+                                <ChevronLeftIcon className="w-4 h-4" />
                                 Previous Lesson
                             </Button>
                             <Button variant="outline" onClick={goToNextLesson}>
                                 Next Lesson
-                                <ChevronRightIcon className="w-4 h-4" /> 
+                                <ChevronRightIcon className="w-4 h-4" />
                             </Button>
                         </div>
                     </div>
@@ -63,29 +67,37 @@ export default function LessonView() {
         </div>
     );
 
-    function generateLesson() {
-        // TODO: Fetch lesson data from AI based on the selected module
-        const aiGeneratedLesson = [
-            { question: "Translate 'Hello'", type: "written", answer: "Hola" },
-            { question: "Say 'Good Morning'", type: "speech", answer: "Buenos días" },
-        ];
-        setLesson(aiGeneratedLesson);
+    async function generateLesson() {
+        if (!selectedLanguage || !currentModule) return;
+        
+        try {
+            const tutLessons = await generateModuleLessons(selectedLanguage, currentModule);
+            setLesson(tutLessons);
+
+        } catch (err: any) {
+            errorToast("Error Generating Lesson", err.message);
+        }
     }
 
     function saveProgress(moduleIndex: number) {
-        updateProgress(selectedLanguage!, moduleIndex);
+        handleUpdateProgress(selectedLanguage!, moduleIndex);
     }
 
-    function checkPreviousLesson(){
+    function checkPreviousLesson() {
         if (!currentModule || currentModule <= 1) return;
 
-        updateProgress(selectedLanguage!, currentModule - 1);
+        handleUpdateProgress(selectedLanguage!, currentModule - 1);
     }
-    
-    function goToNextLesson(){
+
+    function goToNextLesson() {
         if (!currentModule || currentModule >= 20) return;
 
-        updateProgress(selectedLanguage!, currentModule + 1);
+        handleUpdateProgress(selectedLanguage!, currentModule + 1);
+    }
+
+    function handleUpdateProgress(language: string, newModule: number) { // middleman
+        updateProgress(language, newModule);
+        addLanguageActivity(language, newModule);
     }
 }
 

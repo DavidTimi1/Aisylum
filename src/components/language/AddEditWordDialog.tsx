@@ -24,6 +24,7 @@ export default function AddEditWordDialog({ open, editItem, onClose, onSaved }: 
       setBaseLang(editItem.baseLang);
       setTranslations(editItem.translations || []);
       setNotes(editItem.notes || "");
+      
     } else if (open) {
       setWord("");
       setBaseLang("en");

@@ -4,6 +4,7 @@ import { chatHasMessages, useChats } from "@/hooks/use-chat";
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { formatDistanceToNow } from 'date-fns';
 import { rateLimit } from "@/lib/utils";
+import useActivityStore from "@/stores/activityStore";
 
 export interface ChatHistoryProps {
   activeChat?: number;
@@ -12,13 +13,16 @@ export interface ChatHistoryProps {
 
 type triggerHandler = {
   refreshChats: () => void;
+  sentMessageCallback: () => void;
 };
 
 export const ChatHistory = forwardRef<triggerHandler>((props, ref) => {
   const { activeChat, setActiveChat } = props as ChatHistoryProps;
   const { chats, loading, addChat, deleteChat, refreshChats } = useChats();
+  const { addChatActivity } = useActivityStore();
   const [isOpen, setIsOpen] = useState(false);
   const timePast = (date: Date) => formatDistanceToNow(date, { addSuffix: true });
+  const activeChatName = chats.find( c => c.id === activeChat )?.name;
 
   useEffect(() => {
     if (!loading){
@@ -29,6 +33,7 @@ export const ChatHistory = forwardRef<triggerHandler>((props, ref) => {
   // Expose functions to parent via ref
   useImperativeHandle(ref, () => ({
     refreshChats,
+    sentMessageCallback
   }));
 
   const handleNewChat = rateLimit( createNewChat, 3000);
@@ -141,6 +146,12 @@ export const ChatHistory = forwardRef<triggerHandler>((props, ref) => {
       setActiveChat(chatID);
       setIsOpen(false);
     }
+  }
+
+  function sentMessageCallback(){
+    if (!activeChat) return 
+    
+    addChatActivity(activeChat, activeChatName);
   }
   
   function handleDeleteChat(id, e){

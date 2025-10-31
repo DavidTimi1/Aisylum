@@ -4,14 +4,18 @@ import { Button } from "@/components/ui/button";
 import { changeChatName, useMessages } from "@/hooks/use-chat";
 import { MessageList } from "@/components/aiChat/messageList";
 import { ChatHistory } from "@/components/aiChat/chatHistory";
-import { generateConversationTitle } from "@/lib/built-in-ai";
+import { errorToast, successToast } from "@/hooks/use-toast";
+import { generateConversationTitle } from "@/stores/summarizerStore";
 
 export default function Chat() {
   const [input, setInput] = useState("");
   const [chatID, setChatID] = useState<number>();
   const [newMessage, setSentNewMessage] = useState(false);
-  const { messages, sendMessage, isLoading } = useMessages(chatID);
-  const childRef = useRef<{ refreshChats: () => void }>(null);
+  const { messages, sendMessage, isLoading, isResponding, isError } = useMessages(chatID);
+  const childRef = useRef<{
+    refreshChats: () => void,
+    sentMessageCallback: () => void
+  }>(null);
 
   // set a chat name
   const isFirstConvo = messages.filter(msg => msg.role === 'assistant').length === 1;
@@ -35,7 +39,51 @@ export default function Chat() {
 
         <div className="h-full flex flex-col">
           <div className="flex-1 overflow-y-auto p-4 lg:px-6 space-y-4">
-            <MessageList messages={messages} />
+            <MessageList messages={messages} noPlaceholder={isResponding || isError } />
+
+            {
+              isResponding && (
+                <>
+                  <div className="flex justify-end">
+                    <div className="max-w-[80%] rounded-md px-4 py-3 bg-accent text-accent-foreground">
+                      <p className="text-sm">{ input }</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-zinc-50 rounded-lg p-4">
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                  </div>
+                </>
+              )
+            }
+
+            {
+              isError && (
+                <>
+                <div className="flex justify-end">
+                  <div className="max-w-[80%] rounded-md px-4 py-3 bg-accent text-accent-foreground">
+                    <p className="text-sm">{ input }</p>
+                  </div>
+                </div>
+
+                <div className="border-red-500 bg-red-200 text-red-500 p-2 text-sm flex gap-2 items-center rounded-lg">
+                  <p>There was an error processing your message.</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={resendMessage}
+                  >
+                    Retry
+                  </Button>
+                </div>
+                </>
+              )
+            }
+
           </div>
 
           <form onSubmit={handleSubmit} className="border-t border-border bg-card px-4 py-2 lg:px-6">
@@ -66,7 +114,7 @@ export default function Chat() {
                 type="submit"
                 size="icon"
                 className="shrink-0"
-                disabled={!input.trim() || isLoading}
+                disabled={!input.trim() || isLoading || isResponding}
               >
                 <Send className="h-5 w-5" />
               </Button>
@@ -79,12 +127,26 @@ export default function Chat() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || isResponding) return;
 
-    await sendMessage(input);
-    setInput("");
-    setSentNewMessage(true);
+    dispatchMessage();
   };
+
+  async function resendMessage() {
+    dispatchMessage();
+  }
+
+  async function dispatchMessage() {
+    try {
+      await sendMessage(input);
+      setInput("");
+      setSentNewMessage(true);
+      childRef.current?.sentMessageCallback();
+
+    } catch (error) {
+      errorToast("Error Sending Message", error.message)
+    }
+  }
 
   async function updateChatName(messages) {
     const chatTitle = await generateConversationTitle(messages);

@@ -31,7 +31,9 @@ self.addEventListener('install', (event) => {
   );
 });
 
-const DEVMODE = import.meta.env === 'development';
+
+const devHostNames = ['localhost', '127.0.0.1'];
+const DEVMODE = devHostNames.includes(self.location.hostname);
 
 // Fetch event handler
 self.addEventListener('fetch', (event) => {
@@ -39,10 +41,11 @@ self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(request.url);
 
   // Skip WebSocket handshake requests (Vite uses ?token=...)
-  if ( DEVMODE && requestUrl.searchParams.has('token')) return;
-
   // Bypass the service worker for all API requests
-  if (requestUrl.pathname.startsWith(BACKEND_API_PREFIX)) {
+  if (
+    requestUrl.pathname.startsWith(BACKEND_API_PREFIX) ||
+    DEVMODE && requestUrl.searchParams.has('token')
+  ){
     event.respondWith(fetch(request));
     return;
   }

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguageStore } from "@/stores/languageStore";
 import { LanguageSelect } from "../ui/language-selector";
 
-export default function LanguageList() {
+export default function LanguageList({viewModules}) {
     const [newLanguage, setNewLanguage] = useState("");
     const { languages, addLanguage, setSelectedLanguage } = useLanguageStore();
 
@@ -17,7 +17,7 @@ export default function LanguageList() {
                         <li
                             key={idx}
                             className="p-3 bg-background/50 border border-foreground/10 rounded-lg cursor-pointer hover:bg-primary/10"
-                            onClick={() => setSelectedLanguage(lang.languageCode)}
+                            onClick={() => handleLanguageClick(lang.languageCode)}
                         >
                             <h3 className="font-semibold text-foreground">{lang.language}</h3>
                             <p className="text-sm text-foreground/60">Current Module: {lang.currentModule + 1}</p>
@@ -38,6 +38,11 @@ export default function LanguageList() {
             </div>
         </div>
     );
+
+    function handleLanguageClick(languageCode){
+        setSelectedLanguage(languageCode);
+        viewModules(languageCode)
+    }
 
     function handleAddLanguage() {
         if (!newLanguage) return

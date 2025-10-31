@@ -23,13 +23,13 @@ export const useToast = () => {
 
 
 export const successToast = (message: string, description?: string) =>
-  toast.success(message, { description }),
+  toast.success(message, { description });
 
 export const errorToast = (message: string, description?: string) =>
-  toast.error(message, { description }),
+  toast.error(message, { description });
 
 export const infoToast = (message: string, description?: string) =>
-  toast.info(message, { description }),
+  toast.info(message, { description });
 
 export const warningToast = (message: string, description?: string) =>
-  toast.warning(message, { description }),
+  toast.warning(message, { description });
