@@ -16,7 +16,10 @@ export const Navbar = () => {
         <aside className="fixed left-0 bottom-0 md:bottom-auto md:top-0 w-screen py-2 px-15 md:bg-background/90 md:backdrop-blur-sm z-10">
             <div className="md:hidden absolute left-0 bottom-0 w-full h-10 bg-gradient-to-t from-foreground/40 to-background"></div>
             <div className="flex items-center justify-between md:w-full border md:border-none rounded-xl bg-background/90 backdrop-blur-sm md:bg-none md:backdrop-blur-none">
-                <header className="hidden md:flex items-center gap-2 montserrat-font">
+                <header className="hidden md:flex items-center gap-1 montserrat-font">
+                    <div className="w-10">
+                        <img src="/logo.png" alt="aisylum logo" className="w-full object-cover" />
+                    </div>
                     <a className="text-lg font-bold text-foreground">
                         Aisylum
                     </a>
@@ -35,8 +38,8 @@ export const Navbar = () => {
                 </nav>
 
                 <div className="hidden md:flex items-center gap-2">
-                    <CloudOffIcon />
-                    <LockIcon />
+                    <CloudOffIcon className="w-4 h-4" />
+                    <LockIcon className="w-4 h-4" />
                 </div>
 
             </div>
