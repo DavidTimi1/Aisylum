@@ -14,7 +14,7 @@ interface DownloadProgressEvent {
 }
 
 export interface AISession {
-    prompt(input: string): Promise<string>;
+    prompt(input: string, args?: any): Promise<string>;
     promptStreaming(input: string): ReadableStream;
     destroy(): void;
 }
@@ -99,20 +99,22 @@ export async function createChatSession(
     if (!isAvailable) {
         throw new Error('Prompt API not available');
     }
-    
+
     const params = await LanguageModel.params();
 
     return await LanguageModel.create({
         temperature: Math.max(params.defaultTemperature * 1.2, 2.0),
         topK: params.defaultTopK,
+        expectedOutputs: [
+            { type: "text", languages: ['en'] }
+        ],
 
         initialPrompts: [
             ...(options.systemPrompt
                 ? [{ role: 'system', content: options.systemPrompt }]
                 : []),
             ...options.history
-        ],
-        
+        ]
     });
 }
 
@@ -138,7 +140,7 @@ export interface SummarizerOptions {
     length?: 'short' | 'medium' | 'long';
 }
 
-interface AISummarizer {
+export interface AISummarizer {
     summarize(text: string, options?: SummarizerOptions): Promise<string>;
     summarizeStreaming(text: string, options?: SummarizerOptions): ReadableStream;
     destroy(): void;
@@ -149,7 +151,7 @@ interface AISummarizer {
  */
 export async function createSummarizer(
     options: SummarizerOptions = {},
-    // onDownloadProgress?: (progress: number) => void
+    onDownloadProgress?: (progress: number) => void
 ) {
     const isAvailable = await checkAIAvailability(AI_APIS.SUMMARIZER) === 'available';
     const Summarizer = (window as any).Summarizer;
@@ -164,35 +166,14 @@ export async function createSummarizer(
         length: options.length || 'medium',
     };
 
-    // if (onDownloadProgress) {
-    //     summarizerOptions.monitor = createDownloadMonitor((loaded, total) => {
-    //         onDownloadProgress(loaded / total);
-    //     });
-    // }
+    if (onDownloadProgress) {
+        summarizerOptions.monitor = createDownloadMonitor((loaded, total) => {
+            onDownloadProgress(loaded / total);
+        });
+    }
 
     const summarizer = await Summarizer.create(summarizerOptions);
     return summarizer as AISummarizer;
-}
-
-/**
- * Generate a title from conversation
- */
-export async function generateConversationTitle(
-    messages: Array<{ role: string; content: string }>
-): Promise<string> {
-    const conversationText = messages
-        .map(m => `${m.role}: ${m.content}`)
-        .join('\n');
-
-    const titleSummarzer = await createSummarizer({
-        type: 'headline',
-        length: 'short'
-    });
-
-    return await titleSummarzer.summarize(conversationText, {
-        type: 'headline',
-        length: 'short'
-    });
 }
 
 
@@ -218,7 +199,8 @@ let languageDetectorInstance: LanguageDetectorSession;
 
 export async function detectLanguage(
     text: string,
-    topResults: number = 3
+    topResults: number = 3,
+    onDownloadProgress?: (progress: number) => void
 ) {
     const isAvailable = await checkAIAvailability(AI_APIS.LANGUAGE_DETECTOR) === 'available';
     const LanguageDetector = (window as any).LanguageDetector;
@@ -227,9 +209,23 @@ export async function detectLanguage(
         throw new Error('LanguageDetector API not available');
     }
 
-    if (!languageDetectorInstance) {
-        languageDetectorInstance = await LanguageDetector.create();
+    // 2. Create download monitor (if needed)
+    let monitor;
+    if (onDownloadProgress) {
+        monitor = {
+            download: (loaded: number, total: number) => {
+                onDownloadProgress(loaded / total);
+            },
+        };
     }
+
+    // 3. Initialize the model (only once)
+    if (!languageDetectorInstance) {
+        languageDetectorInstance = await LanguageDetector.create({
+            monitor,
+        });
+    }
+
     const results = await languageDetectorInstance.detect(text) as LanguageDetectionResult[];
     return results.slice(0, topResults);
 }
@@ -237,7 +233,7 @@ export async function detectLanguage(
 /**
  * Get primary detected language
  */
-export async function getPrimaryLanguage(text: string){
+export async function getPrimaryLanguage(text: string) {
     const results = await detectLanguage(text, 1);
     return results[0]?.detectedLanguage;
 }
@@ -247,7 +243,7 @@ export async function getPrimaryLanguage(text: string){
 // TRANSLATOR API
 // =============================================================================
 
-interface TranslatorSession {
+export interface TranslatorSession {
     translate(text: string): Promise<string>;
     translateStreaming(text: string): ReadableStream;
     destroy(): void;
@@ -296,17 +292,6 @@ export async function translateText(
     const translator = TranslatorCache[keyValue];
     const result = await translator.translate(text);
     return result;
-}
-
-/**
- * Auto-detect language and translate
- */
-export async function autoTranslate(
-    text: string,
-    targetLanguage: string
-): Promise<string> {
-    const sourceLanguage = await getPrimaryLanguage(text);
-    return await translateText(text, { sourceLanguage, targetLanguage });
 }
 
 
@@ -363,7 +348,49 @@ export interface RewriterOptions {
     tone?: 'as-is' | 'more-formal' | 'more-casual';
     format?: 'as-is' | 'plain-text' | 'markdown';
     length?: 'as-is' | 'shorter' | 'longer';
-    context?: string;
+    sharedContext?: string;
+    language?: string;
+}
+
+
+/**
+ * Rewrite existing text
+ */
+export async function createRewriter(
+    text: string,
+    options: RewriterOptions = {},
+    onDownloadProgress?: (progress: number) => void
+){
+    if (!('Rewriter' in window)) {
+        throw new Error('Rewriter API not supported');
+    }
+
+    const rewriterOptions: any = {
+        tone: options.tone || 'as-is',
+        format: options.format || 'as-is',
+        length: options.length || 'as-is',
+    };
+
+    if (options.sharedContext) {
+        rewriterOptions.sharedContext = options.sharedContext;
+    }
+
+    if (options.language) {
+        rewriterOptions.outputLanguage = options.language;
+        rewriterOptions.expectedInputLanguage = [options.language];
+    }
+
+
+    if (onDownloadProgress) {
+        rewriterOptions.monitor = createDownloadMonitor((loaded, total) => {
+            onDownloadProgress(loaded / total);
+        });
+    }
+
+    const rewriter = await (window as any).Rewriter.create(rewriterOptions);
+    const result = await rewriter.rewrite(text);
+    rewriter.destroy();
+    return result;
 }
 
 /**
@@ -384,8 +411,13 @@ export async function rewriteText(
         length: options.length || 'as-is',
     };
 
-    if (options.context) {
-        rewriterOptions.context = options.context;
+    if (options.sharedContext) {
+        rewriterOptions.sharedContext = options.sharedContext;
+    }
+    
+    if (options.language) {
+        rewriterOptions.outputLanguage = options.language;
+        rewriterOptions.expectedInputLanguage = [options.language];
     }
 
     if (onDownloadProgress) {
@@ -442,64 +474,3 @@ export async function proofreadText(
     return result;
 }
 
-
-
-// =============================================================================
-// EXAMPLE USAGE PATTERNS
-// =============================================================================
-
-/**
- * Example: Complete chat implementation
- */
-export async function exampleChatImplementation() {
-    // Create session
-    const session = await createChatSession({
-        systemPrompt: 'You are a helpful assistant.',
-        temperature: 0.8
-    });
-
-    // Send message
-    const response = await sendMessage(session, 'Hello!');
-    console.log(response);
-
-    // Send with streaming
-    for await (const chunk of sendMessageStreaming(session, 'Tell me a story')) {
-        console.log(chunk); // Process each chunk as it arrives
-    }
-
-    // Cleanup
-    session.destroy();
-}
-
-/**
- * Example: React component with hooks
- */
-/*
-function ChatComponent() {
-  const { isAvailable, needsDownload } = useAIAvailability('prompt');
-  const { session, create, destroy } = useAISession(
-    () => createChatSession({ systemPrompt: 'You are helpful.' })
-  );
-
-  useEffect(() => {
-    if (isAvailable && !session) {
-      create();
-    }
-  }, [isAvailable]);
-
-  const handleSend = async (message: string) => {
-    if (!session) return;
-    
-    for await (const chunk of sendMessageStreaming(session, message)) {
-      // Update UI with chunk
-    }
-  };
-
-  return (
-    <div>
-      {needsDownload && <p>Model needs to be downloaded</p>}
-      {isAvailable && <button onClick={() => handleSend('Hi!')}>Send</button>}
-    </div>
-  );
-}
-*/
