@@ -88,14 +88,14 @@ export default function Chat() {
 
           <form onSubmit={handleSubmit} className="border-t border-border bg-card px-4 py-2 lg:px-6">
             <div className="flex gap-2 items-end">
-              <Button
+              {/* <Button
                 type="button"
                 variant="outline"
                 size="icon"
                 className="shrink-0"
               >
                 <Mic className="h-5 w-5" />
-              </Button>
+              </Button> */}
 
               <textarea
                 value={input}

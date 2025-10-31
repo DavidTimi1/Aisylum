@@ -13,8 +13,8 @@ const navigation = [
 export const Navbar = () => {
 
     return (
-        <aside className="fixed left-0 bottom-0 md:bottom-auto md:top-0 w-screen py-2 px-15 md:bg-background/90 md:backdrop-blur-sm z-10">
-            <div className="md:hidden absolute left-0 bottom-0 w-full h-10 bg-gradient-to-t from-foreground/40 to-background"></div>
+        <aside className="fixed left-0 bottom-0 md:bottom-auto md:top-0 w-screen py-2 pb-3 md:pb-2 px-15 md:bg-background/90 md:backdrop-blur-sm z-10">
+            <div className="md:hidden absolute left-0 bottom-0 w-full h-8 blur-2xl bg-gradient-to-t from-foreground/50 to-background"></div>
             <div className="flex items-center justify-between md:w-full border md:border-none rounded-xl bg-background/90 backdrop-blur-sm md:bg-none md:backdrop-blur-none">
                 <header className="hidden md:flex items-center gap-1 montserrat-font">
                     <div className="w-10">
@@ -24,7 +24,7 @@ export const Navbar = () => {
                         Aisylum
                     </a>
                 </header>
-                <nav className="flex w-full md:w-auto py-2 md:py-0 items-center justify-evenly gap-3">
+                <nav className="flex w-full md:w-auto py-3 md:py-0 items-center justify-evenly gap-3">
                     {
                         navigation.map((item) => (
                             <NavItem
@@ -53,7 +53,7 @@ const NavItem = ({ to, name, icon: Icon }: { to: string; name: string; icon: Rea
             to={to}
             className={({ isActive }) =>
                 cn(
-                    "flex flex-col items-center gap-1 rounded-md p-2 transition-colors duration-200",
+                    "flex flex-col items-center gap-1 rounded-md p-3 md:p-2 transition-colors duration-200",
                     isActive
                         ? "bg-foreground text-background"
                         : "text-foreground hover:bg-muted"

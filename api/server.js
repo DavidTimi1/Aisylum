@@ -65,7 +65,7 @@ app.post('/api/prompt', async (req, res) => {
   try {
     const { systemPrompt, prompt } = req.body;
     const response = await runPrompt({
-      systemInstruction: systemPrompt,
+      systemInstruction: systemPrompt + " keep responses short and without any markdown or styles unless explicitly asked for",
       userPrompt: prompt,
     });
     res.json({ response });

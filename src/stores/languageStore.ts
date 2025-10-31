@@ -164,6 +164,7 @@ export async function generateModuleLessons(language?: string, module?: number) 
     } catch (err) {
       console.warn('Local LLM failed, switching to remote fallback:', err);
     }
+
   } else {
     console.warn(`Local AI unavailable (${availability}), using remote fallback.`);
   }
@@ -183,19 +184,14 @@ Each item should follow this structure:
 Return *only* valid JSON — no explanations, markdown, or text outside the array.
   `.trim();
 
-  try {
-    const response = await callRemotePromptAPI({
-      prompt: `Generate lessons for module ${module}`,
-      systemPrompt,
-    });
+  const response = await callRemotePromptAPI({
+    prompt: `Generate lessons for module ${module}`,
+    systemPrompt,
+  });
 
-    const jsonResponse = extractJsonString(response);
-    return JSON.parse(jsonResponse);
+  const jsonResponse = extractJsonString(response);
+  return JSON.parse(jsonResponse);
 
-  } catch (error) {
-    console.error('Remote fallback also failed:', error);
-    return null;
-  }
 }
 
 
@@ -216,8 +212,8 @@ export async function autoTranslate(
   }
   // Remote fallback
 
-  if (!result){
-    result =  await callRemoteTranslateAPI(text, targetLanguage);
+  if (!result) {
+    result = await callRemoteTranslateAPI(text, targetLanguage);
   }
 
   return {
