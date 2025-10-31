@@ -69,7 +69,7 @@ export const getAllDocuments = async (): Promise<Document[]> => {
   return await IDBPromise(store.getAll()) as Document[];
 };
 
-export const saveDocument = async (doc: Document): Promise<void> => {
+export const saveDocument = async (doc: Document) => {
   const db = await initDB();
 
   const tx = db.transaction('documents', 'readwrite');
@@ -77,7 +77,7 @@ export const saveDocument = async (doc: Document): Promise<void> => {
   return await IDBPromise(store.put(doc));
 };
 
-export const deleteDocument = async (id: number): Promise<void> => {
+export const deleteDocument = async (id: number) => {
   const db = await initDB();
 
   const tx = db.transaction('documents', 'readwrite');

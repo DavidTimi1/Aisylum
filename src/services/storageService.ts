@@ -1,4 +1,3 @@
-// Service for handling IndexedDB operations
 
 class StorageService {
   private dbName = "TrustNavigatorDB";
