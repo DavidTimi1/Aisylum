@@ -7,15 +7,18 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { AlertTriangleIcon, CheckCircle2, Loader2 } from 'lucide-react';
+import { Button } from '../ui/button';
 
 interface Props {
   open: boolean;
   setOpen: (v: boolean) => void;
+  startRefining: () => void;
   processing: {
     isProcessing: boolean;
     stage: string;
     progress: number;
     error?: string;
+    refined?: boolean;
   };
 }
 
@@ -31,7 +34,7 @@ const UploadDialog: React.FC<Props> = ({ open, setOpen, processing }) => (
 
       <div className="space-y-4 py-4">
         {processing.error ? (
-            <div className="border-red-700 bg-red-400 text-red-700 text-sm flex gap-2 items-center rounded-lg">
+            <div className="border-red-500 bg-red-200 text-red-500 p-2 text-sm flex gap-2 items-center rounded-lg">
                 <AlertTriangleIcon className="h-5 w-5" />
                 <span>{processing.error}</span>
             </div>
@@ -46,6 +49,7 @@ const UploadDialog: React.FC<Props> = ({ open, setOpen, processing }) => (
               <span className="text-sm font-medium">
                 {processing.stage === 'uploading' && 'Uploading file...'}
                 {processing.stage === 'extracting' && 'Extracting text...'}
+                {processing.stage === 'refining' && 'Refining text...'}
                 {processing.stage === 'complete' && 'Complete!'}
               </span>
             </div>
@@ -56,6 +60,13 @@ const UploadDialog: React.FC<Props> = ({ open, setOpen, processing }) => (
                 style={{ width: `${processing.progress}%` }}
               />
             </div>
+            {/* {
+              processing.stage === 'complete' && !processing.refined && (
+                <Button>
+                  Refine Text
+                </Button>
+              )
+            } */}
           </>
         )}
       </div>

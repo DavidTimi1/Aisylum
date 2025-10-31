@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import DocumentsHeader from '@/components/documents/DocumentsHeader';
@@ -9,8 +7,12 @@ import UploadDialog from '@/components/documents/UploadDialog';
 import DocumentViewerDialog from '@/components/documents/DocumentViewerDialog';
 import { getAllDocuments, saveDocument, deleteDocument } from '@/lib/db';
 import { extractTextFromFile } from '@/lib/text-extraction';
+import useActivityStore from '@/stores/activityStore';
+import { createRegularSummary } from '@/stores/summarizerStore';
+import { rewriteClearly } from '@/stores/rewriteStore';
+import { autoTranslate } from '@/stores/languageStore';
 
-// 🔹 Type definition
+// Type definition
 export interface Document {
   id: number;
   name: string;
@@ -39,6 +41,7 @@ const DocumentsPage = () => {
   });
 
   const [targetLanguage, setTargetLanguage] = useState('es');
+  const { addDocumentActivity, documentActivity, removeDocumentActivity } = useActivityStore();
 
   useEffect(() => {
     (async () => {
@@ -79,6 +82,7 @@ const DocumentsPage = () => {
       {/* Upload progress dialog */}
       <UploadDialog
         open={uploadDialogOpen}
+        startRefining={handleRefineClick}
         setOpen={setUploadDialogOpen}
         processing={processing}
       />
@@ -105,7 +109,7 @@ const DocumentsPage = () => {
   
     Array.from(files).forEach(async (file) => {
       setUploadDialogOpen(true);
-      setProcessing({ isProcessing: true, stage: 'uploading', progress: 20, error: '' });
+      setProcessing({ isProcessing: true, stage: 'extracting', progress: 20, error: '' });
   
       try {
         const text = await extractText(file);
@@ -116,20 +120,29 @@ const DocumentsPage = () => {
           lastModified: file.lastModified,
           extractedText: text,
         };
-        await saveDocument(newDoc);
+
+        const docId = await saveDocument(newDoc);
+
+        // log activity
+        addDocumentActivity(docId, file.name, 'Uploaded');
+
         setDocuments((prev) => [newDoc, ...prev]);
         toast.success(`Uploaded ${file.name}`);
         setProcessing({ isProcessing: false, stage: 'complete', progress: 100, error: '' });
+
       } catch (err: any) {
         console.error(err);
         setProcessing({ ...processing, isProcessing: false, error: 'Failed to process file' });
       }
     });
   }
+
+  function handleRefineClick() {
+    
+  }
   
   async function extractText(file: File){
     const extractedText = await extractTextFromFile(file);
-    console.log('Extracted text:', extractedText.slice(0, 100)); // Log first 100 characters
     return extractedText;
   }
   
@@ -137,16 +150,20 @@ const DocumentsPage = () => {
     setProcessing({ isProcessing: true, stage: 'summarizing', progress: 30, error: '' });
   
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      const summary = `Summary for ${doc.name}: Lorem ipsum dolor sit amet.`;
+      const summary = await createRegularSummary( doc?.extractedText );
       const updatedDoc = { ...doc, summary };
       await saveDocument(updatedDoc);
+
+      // log activity
+      addDocumentActivity(doc.id, doc.name, 'Summarized');
+
       setDocuments((prev) => prev.map((d) => (d.id === doc.id ? updatedDoc : d)));
       setSelectedDoc(updatedDoc);
       toast.success('Summary generated');
+
     } catch {
       toast.error('Failed to summarize');
+
     } finally {
       setProcessing({ isProcessing: false, stage: '', progress: 100, error: '' });
     }
@@ -154,18 +171,24 @@ const DocumentsPage = () => {
   
   async function handleTranslate(doc: Document, lang: string) {
     setProcessing({ isProcessing: true, stage: 'translating', progress: 40, error: '' });
+
+    if (!doc?.extractedText) return
   
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      const translation = `Translated (${lang.toUpperCase()}): ${doc.extractedText?.slice(0, 100)}...`;
+      const { translation } = await autoTranslate( doc.extractedText, lang );
       const updatedDoc = { ...doc, translation, targetLanguage: lang };
       await saveDocument(updatedDoc);
+
+      // log activity
+      addDocumentActivity(doc.id, doc.name, 'Transalated');
+
       setDocuments((prev) => prev.map((d) => (d.id === doc.id ? updatedDoc : d)));
       setSelectedDoc(updatedDoc);
       toast.success('Translation complete');
+
     } catch {
       toast.error('Failed to translate');
+
     } finally {
       setProcessing({ isProcessing: false, stage: '', progress: 100, error: '' });
     }
@@ -174,6 +197,11 @@ const DocumentsPage = () => {
   async function handleDelete(id: number) {
     await deleteDocument(id);
     setDocuments((prev) => prev.filter((d) => d.id !== id));
+
+    // log activity
+    if ( documentActivity?.docId === id ){
+      removeDocumentActivity(id);
+    }
     toast.success('Document deleted');
   }
   
