@@ -202,6 +202,12 @@ app.post('/api/proofreader', async (req, res) => {
 });
 
 
+// Health status
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+
 // for Vercel
 export default app;
 
