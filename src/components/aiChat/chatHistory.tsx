@@ -1,28 +1,37 @@
-import { SidebarOpenIcon, MessageSquare, Trash2, X, SidebarCloseIcon } from "lucide-react";
+import { SidebarOpenIcon, MessageSquareIcon, Trash2Icon, SidebarCloseIcon, PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useChats } from "@/hooks/use-chat";
-import { useState } from "react";
+import { chatHasMessages, useChats } from "@/hooks/use-chat";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { formatDistanceToNow } from 'date-fns';
+import { rateLimit } from "@/lib/utils";
 
+export interface ChatHistoryProps {
+  activeChat?: number;
+  setActiveChat: (id: number | undefined) => void;
+}
 
-export const ChatHistory = ({ activeChat, setActiveChat }) => {
-  const { chats, loading, addChat, deleteChat } = useChats();
+type triggerHandler = {
+  refreshChats: () => void;
+};
+
+export const ChatHistory = forwardRef<triggerHandler>((props, ref) => {
+  const { activeChat, setActiveChat } = props as ChatHistoryProps;
+  const { chats, loading, addChat, deleteChat, refreshChats } = useChats();
   const [isOpen, setIsOpen] = useState(false);
-
   const timePast = (date: Date) => formatDistanceToNow(date, { addSuffix: true });
 
-  const handleDeleteChat = (id, e) => {
-    e.stopPropagation();
-    if (activeChat === id) {
-      setActiveChat(null);
+  useEffect(() => {
+    if (!loading){
+      handleNewChat();
     }
-    deleteChat(id);
-  };
+  }, [loading]);
 
-  const handleNewChat = () => {
-    const chatName = `Chat ${chats.length + 1}`;
-    addChat(chatName);
-  };
+  // Expose functions to parent via ref
+  useImperativeHandle(ref, () => ({
+    refreshChats,
+  }));
+
+  const handleNewChat = rateLimit( createNewChat, 3000);
 
   return (
     <div className="h-full relative">
@@ -43,17 +52,9 @@ export const ChatHistory = ({ activeChat, setActiveChat }) => {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground">Chat History</h2>
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="ghost" onClick={handleNewChat}>
+              <Button size="sm" variant="outline" onClick={handleNewChat}>
+                <PlusIcon className="h-4 w-4" />
                 New Chat
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="md:hidden h-8 w-8"
-                onClick={() => setIsOpen(false)}
-              >
-                <X className="h-4 w-4" />
-                <span className="sr-only">Close</span>
               </Button>
             </div>
           </div>
@@ -67,7 +68,7 @@ export const ChatHistory = ({ activeChat, setActiveChat }) => {
             ) : chats.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center space-y-3 py-8">
                 <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center">
-                  <MessageSquare className="h-6 w-6 text-accent" />
+                  <MessageSquareIcon className="h-6 w-6 text-accent" />
                 </div>
                 <p className="text-sm text-muted-foreground">
                   No conversations yet. Start a new chat to begin.
@@ -100,7 +101,7 @@ export const ChatHistory = ({ activeChat, setActiveChat }) => {
                     className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={(e) => handleDeleteChat(chat.id, e)}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2Icon className="h-4 w-4" />
                     <span className="sr-only">Delete</span>
                   </Button>
                 </div>
@@ -124,4 +125,28 @@ export const ChatHistory = ({ activeChat, setActiveChat }) => {
 
     </div>
   );
-};
+
+  async function createNewChat() {
+    const hasUnusedSession = !( chats.length && await chatHasMessages(chats[0].id) );
+
+    if (chats.length && hasUnusedSession) {
+      setActiveChat(chats[0].id);
+      setIsOpen(false);
+      return;
+    }
+
+    const chatName = "New Chat";
+    const chatID = await addChat(chatName);
+    if (chatID) {
+      setActiveChat(chatID);
+      setIsOpen(false);
+    }
+  }
+  
+  function handleDeleteChat(id, e){
+    e.stopPropagation();
+    deleteChat(id);
+    handleNewChat();
+  };
+
+});

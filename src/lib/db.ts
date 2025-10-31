@@ -1,7 +1,8 @@
+import type { Document } from "@/pages/Documents";
 
 // IndexedDB setup and hooks
-const DB_NAME = "PrivateAssistanceDB";
-const DB_VERSION = 1;
+const DB_NAME = "Aisylum DB";
+const DB_VERSION = 1.0000001;
 
 // Initialize IndexedDB
 export const initDB = () => {
@@ -26,16 +27,60 @@ export const initDB = () => {
         messagesStore.createIndex("chatId", "chatId", { unique: false });
       }
 
-      // Create dictionary store
-      if (!db.objectStoreNames.contains("dictionary")) {
-        const dictionaryStore = db.createObjectStore("dictionary", { keyPath: "id", autoIncrement: true });
-        dictionaryStore.createIndex("word", "word", { unique: false });
+      if (!db.objectStoreNames.contains("vocabulary")) {
+        const vocabStore = db.createObjectStore("vocabulary", {
+          keyPath: "id",
+          autoIncrement: true,
+        });
+
+        // Indexes to speed up searches and filters
+        vocabStore.createIndex("word", "word", { unique: false });
+        vocabStore.createIndex("language", "language", { unique: false });
+        vocabStore.createIndex("dateAdded", "dateAdded", { unique: false });
       }
 
       // Create documents store
       if (!db.objectStoreNames.contains("documents")) {
-        db.createObjectStore("documents", { keyPath: "id", autoIncrement: true });
+        const documentsStore = db.createObjectStore("documents", { keyPath: "id", autoIncrement: true });
+        documentsStore.createIndex("lastModified", "lastModified", { unique: false });
+        documentsStore.createIndex("uploadedAt", "uploadedAt", { unique: false });
+        documentsStore.createIndex("type", "type", { unique: false });
       }
     };
   });
+};
+
+
+// Wrap any IDBRequest into a Promise
+export function IDBPromise<T = any>(request: IDBRequest<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+
+
+export const getAllDocuments = async (): Promise<Document[]> => {
+  const db = await initDB();
+
+  const tx = db.transaction('documents', 'readonly');
+  const store = tx.objectStore('documents');
+  return await IDBPromise(store.getAll()) as Document[];
+};
+
+export const saveDocument = async (doc: Document): Promise<void> => {
+  const db = await initDB();
+
+  const tx = db.transaction('documents', 'readwrite');
+  const store = tx.objectStore('documents');
+  return await IDBPromise(store.put(doc));
+};
+
+export const deleteDocument = async (id: number): Promise<void> => {
+  const db = await initDB();
+
+  const tx = db.transaction('documents', 'readwrite');
+  const store = tx.objectStore('documents');
+  return await IDBPromise(store.delete(id));
 };
