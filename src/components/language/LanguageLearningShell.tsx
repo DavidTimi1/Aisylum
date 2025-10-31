@@ -60,12 +60,14 @@ export default function LanguageLearningShell() {
             </div>
 
             <div>
-                {tab === "languages" && <LanguageList />}
+                {tab === "languages" && <LanguageList viewModules={handleViewModules} />}
                 {tab === "lessons" && <LessonView />}
                 {tab === "translator" && <TranslatorPanel />}
             </div>
         </section>
     );
 
-    function noop() { /* placeholder for unused functions */ }
+    function handleViewModules() {
+        setTab("lessons");
+    }
 }
