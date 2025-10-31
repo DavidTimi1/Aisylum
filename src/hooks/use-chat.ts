@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { chatService } from "@/services/chatService";
 import { IDBPromise, initDB } from "@/lib/db";
 import { useChatSessionStore } from "@/stores/useChatSessionStore";
 
@@ -12,6 +11,7 @@ interface Message {
 export function useMessages(chatID: number | undefined) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isResponding, setIsResponding] = useState(false);
   const [isError, setIsError] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,69 +19,93 @@ export function useMessages(chatID: number | undefined) {
 
   const loadMessages = async (chatID: number) => {
     if ([undefined, null].includes(chatID)) {
+      setIsLoading(false)
       setMessages([]);
       return;
     }
+    setIsLoading(true)
 
     try {
       const msgs = await getMessagesForChat(chatID);
       setMessages(msgs);
+
     } catch (error) {
       console.error("Failed to load messages:", error);
-    }
-  };
-
-  const sendMessage = async (content: string) => {
-    if (!chatID) return;
-
-    setIsLoading(true);
-    const userMessage: Message = {
-      role: "user",
-      content,
-      timestamp: new Date().toLocaleTimeString()
-    };
-
-    const chatSession = await getChatSession(chatID)
-    try {
-      const response = await chatSession!.prompt(content);
-
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: response,
-        timestamp: new Date().toLocaleTimeString()
-      };
-
-      const db = await initDB();
-      const transaction = db.transaction(["messages"], "readwrite");
-      const store = transaction.objectStore("messages");
-
-      await IDBPromise(store.add({ ...userMessage, chatId: chatID }));
-      await IDBPromise(store.add({ ...assistantMessage, chatId: chatID }));
-
-      // Update local state
-      setMessages((prevMessages) => [...prevMessages, userMessage, assistantMessage]);
-
-    } catch (error) {
-      setIsError(true);
-      setError("Failed to send message.");
-      console.error("Error sending message:", error);
 
     } finally {
       setIsLoading(false);
     }
   };
 
+  const sendMessage = async (content: string) => {
+    if (!chatID) return;
+
+    setIsResponding(true);
+    setIsError(false);
+
+    const userMessage: Message = {
+      role: "user",
+      content,
+      timestamp: new Date().toLocaleTimeString()
+    };
+
+    try {
+      const chatSession = await getChatSession(chatID)
+      const response = await chatSession!.prompt(content);
+
+      await saveMessageToDB( userMessage, chatID);
+      setMessages((prevMessages) => [...prevMessages, userMessage]);
+
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: response,
+        timestamp: new Date().toLocaleTimeString()
+      };
+      await saveMessageToDB( assistantMessage, chatID);
+
+      // Update local state
+      setMessages((prevMessages) => [...prevMessages, assistantMessage]);
+      setIsResponding(false);
+
+    } catch (error) {
+      setIsError(true);
+      setError("Failed to send message.");
+      console.error("Error sending message:", error);
+      setIsResponding(false);
+      throw error.message
+
+    } finally {
+      setIsResponding(false);
+    }
+  };
+
   useEffect(() => {
-    chatID && loadMessages(chatID);
+    if (chatID){
+      loadMessages(chatID);
+      setError(null);
+      setIsLoading(false);
+      setError(null);
+    }
   }, [chatID]);
 
   return {
     messages,
     sendMessage,
-    isLoading
+    isLoading,
+    isResponding,
+    isError
   };
 }
 
+
+async function saveMessageToDB(messageObj, chatID){
+  const db = await initDB();
+  const transaction = db.transaction(["messages"], "readwrite");
+  const store = transaction.objectStore("messages");
+  return await IDBPromise(
+    store.add({ ...messageObj, chatID })
+  );
+}
 
 export function getMessagesForChat(chatID: number): Promise<Message[]> {
 
