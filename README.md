@@ -1,4 +1,6 @@
 # Aisylum
+![Aisylum Banner](public/images/banner%20image.png)
+
 Think refugees and asylum seekers using AI without fear of being their info being compromised.
 
 Aisylum is a platform designed to empower refugees and asylum seekers by leveraging AI technology to provide assistance without compromising their personal information. The project prioritizes security, privacy, and accessibility.
