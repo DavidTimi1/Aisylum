@@ -1,5 +1,6 @@
 # Aisylum
-![Aisylum Banner](public/images/banner%20image.png)
+<img src="public/images/banner%20image.png" alt="Aisylum Banner" width="300" height="300">
+
 
 Think refugees and asylum seekers using AI without fear of being their info being compromised.
 
