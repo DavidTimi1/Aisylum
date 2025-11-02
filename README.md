@@ -37,7 +37,7 @@ Aisylum is a platform designed to empower refugees and asylum seekers by leverag
 ### Frontend
 - **React**: For building the user interface.
 - **TypeScript**: Ensures type safety and better developer experience.
-- **CSS Modules**: For scoped and maintainable styles.
+- **Shadcn Ui and Tailwindcss**: For scoped and maintainable styles.
 - **Vite**: A fast build tool for modern web development.
 
 ### Backend
