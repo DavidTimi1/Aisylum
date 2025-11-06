@@ -23,10 +23,11 @@ export const ChatHistory = forwardRef<triggerHandler>((props, ref) => {
   const [isOpen, setIsOpen] = useState(false);
   const timePast = (date: Date) => formatDistanceToNow(date, { addSuffix: true });
   const activeChatName = chats.find( c => c.id === activeChat )?.name;
+  const emptyChat = chats.find( c => !c.hasMessages && c.name === "New Chat" );
 
   useEffect(() => {
     if (!loading){
-      handleNewChat();
+      createNewChat();
     }
   }, [loading]);
 
@@ -36,7 +37,7 @@ export const ChatHistory = forwardRef<triggerHandler>((props, ref) => {
     sentMessageCallback
   }));
 
-  const handleNewChat = rateLimit( createNewChat, 3000);
+  const handleNewChat = rateLimit( createNewChat, 1000);
 
   return (
     <div className="h-full relative">
@@ -132,12 +133,11 @@ export const ChatHistory = forwardRef<triggerHandler>((props, ref) => {
   );
 
   async function createNewChat() {
-    const hasUnusedSession = !( chats.length && await chatHasMessages(chats[0].id) );
-
+    const hasUnusedSession = !!emptyChat;
     if (chats.length && hasUnusedSession) {
-      setActiveChat(chats[0].id);
+      setActiveChat(emptyChat.id);
       setIsOpen(false);
-      return;
+      return null;
     }
 
     const chatName = "New Chat";
@@ -146,18 +146,19 @@ export const ChatHistory = forwardRef<triggerHandler>((props, ref) => {
       setActiveChat(chatID);
       setIsOpen(false);
     }
+    return chatID
   }
 
   function sentMessageCallback(){
     if (!activeChat) return 
     
-    addChatActivity(activeChat, activeChatName);
+    addChatActivity(activeChat, activeChatName!);
   }
   
   function handleDeleteChat(id, e){
     e.stopPropagation();
     deleteChat(id);
-    handleNewChat();
+    createNewChat();
   };
 
 });

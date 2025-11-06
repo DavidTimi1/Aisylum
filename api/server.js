@@ -65,7 +65,7 @@ app.post('/api/prompt', async (req, res) => {
   try {
     const { systemPrompt, prompt } = req.body;
     const response = await runPrompt({
-      systemInstruction: systemPrompt + " keep responses short and without any markdown or styles unless explicitly asked for",
+      systemInstruction: systemPrompt + " keep responses a bit brief and without any markdown or styles unless explicitly asked for",
       userPrompt: prompt,
     });
     res.json({ response });
@@ -80,11 +80,11 @@ app.post('/api/summarizer', async (req, res) => {
     const { text, options = {} } = req.body;
     const { type = 'tl;dr', format = 'plain-text', length = 'medium' } = options;
 
-    let instruction = '';
-    if (type === 'key-points') instruction = 'Extract the key points from the text.';
-    else if (type === 'tl;dr') instruction = 'Provide a TL;DR summary.';
-    else if (type === 'teaser') instruction = 'Create an engaging teaser.';
-    else if (type === 'headline') instruction = 'Generate a headline.';
+    let instruction = "Don't use markdown unless i later say so \n";
+    if (type === 'key-points') instruction += 'Extract the key points from the text.';
+    else if (type === 'tl;dr') instruction += 'Provide a TL;DR summary.';
+    else if (type === 'teaser') instruction += 'Create an engaging teaser.';
+    else if (type === 'headline') instruction += 'Generate a headline.';
 
     if (length === 'short') instruction += ' Keep it very brief.';
     if (length === 'long') instruction += ' Provide a comprehensive summary.';
@@ -107,7 +107,7 @@ app.post('/api/writer', async (req, res) => {
     const { prompt, options = {} } = req.body;
     const { tone = 'neutral', format = 'plain-text', length = 'medium', sharedContext } = options;
 
-    let systemInstruction = `Write with a ${tone} tone.`;
+    let systemInstruction = `Write with a ${tone} tone, don't use markdown unless i later say so \n`;
     if (length === 'short') systemInstruction += ' Keep it concise.';
     if (length === 'long') systemInstruction += ' Write in detail.';
     if (format === 'markdown') systemInstruction += ' Format in markdown.';

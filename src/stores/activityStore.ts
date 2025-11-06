@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware';
 // Types for each activity section
 interface ChatActivity {
     id: string;
-    chatId: string;
+    chatId: number;
     name: string;
     timestamp: number;
 }
@@ -44,7 +44,7 @@ interface ActivityStore {
     setLanguage: (language: string) => void;
 
     // Actions for chat activities
-    addChatActivity: (chatId: string, name: string) => void;
+    addChatActivity: (chatId: number, name: string) => void;
     removeChatActivity: (id: number) => void;
 
     // Actions for document activities

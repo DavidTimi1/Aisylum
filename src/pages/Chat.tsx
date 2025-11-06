@@ -12,6 +12,7 @@ export default function Chat() {
   const [chatID, setChatID] = useState<number>();
   const [newMessage, setSentNewMessage] = useState(false);
   const { messages, sendMessage, isLoading, isResponding, isError } = useMessages(chatID);
+  
   const childRef = useRef<{
     refreshChats: () => void,
     sentMessageCallback: () => void

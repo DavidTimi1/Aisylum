@@ -18,22 +18,12 @@ export function useMessages(chatID: number | undefined) {
   const getChatSession = useChatSessionStore(s => s.getSession);
 
   const loadMessages = async (chatID: number) => {
-    if ([undefined, null].includes(chatID)) {
-      setIsLoading(false)
-      setMessages([]);
-      return;
-    }
-    setIsLoading(true)
-
     try {
       const msgs = await getMessagesForChat(chatID);
       setMessages(msgs);
 
     } catch (error) {
       console.error("Failed to load messages:", error);
-
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -81,10 +71,14 @@ export function useMessages(chatID: number | undefined) {
 
   useEffect(() => {
     if (chatID){
-      loadMessages(chatID);
+      setMessages([]);
       setError(null);
-      setIsLoading(false);
-      setError(null);
+      setIsLoading(true);
+      
+      loadMessages(chatID)
+      .then(() => {
+        setIsLoading(false)
+      });
     }
   }, [chatID]);
 
@@ -191,6 +185,7 @@ interface Chat {
   id: number;
   name: string;
   lastModified: number;
+  hasMessages?: boolean;
 }
 
 // Hook for chats
@@ -216,13 +211,11 @@ export const useChats = () => {
 
         } else {
           setChats(results);
-          setLoading(false);
         }
       };
 
     } catch (error) {
       console.error("Error loading chats:", error);
-      setLoading(false);
     }
   };
 
@@ -293,9 +286,14 @@ export const useChats = () => {
       console.error("Error updating chat timestamp:", error);
     }
   };
-
+  
   useEffect(() => {
-    loadChats();
+    setLoading(true);
+
+    loadChats()
+    .then(() => {
+      setLoading(false);
+    })
   }, []);
 
   return { chats, loading, addChat, deleteChat, updateChatTimestamp, refreshChats: loadChats };

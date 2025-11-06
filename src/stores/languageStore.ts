@@ -191,7 +191,6 @@ Return *only* valid JSON — no explanations, markdown, or text outside the arra
 
   const jsonResponse = extractJsonString(response);
   return JSON.parse(jsonResponse);
-
 }
 
 
@@ -202,16 +201,16 @@ export async function autoTranslate(
 ) {
   let result;
   let sourceLanguage;
+
   try {
     sourceLanguage = await getPrimaryLanguage(text);
-
     result = await translateText(text, { sourceLanguage, targetLanguage });
 
   } catch (err: any) {
-    throw err.message
+    console.warn('Local LLM failed, switching to remote fallback:', err);
   }
-  // Remote fallback
 
+  // Remote fallback
   if (!result) {
     result = await callRemoteTranslateAPI(text, targetLanguage);
   }
