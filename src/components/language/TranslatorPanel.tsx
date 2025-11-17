@@ -17,7 +17,7 @@ export default function TranslatorPanel() {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold text-foreground mb-4">Translator</h2>
+      <h2 className="text-2xl font-semibold text-foreground mb-4 montserrat-font">Translator</h2>
       <div className="mb-4">
         <textarea
           className="textarea w-full mb-2 border rounded-lg p-4"
@@ -41,7 +41,7 @@ export default function TranslatorPanel() {
         </div>
       )}
 
-      <h3 className="text-xl font-semibold text-foreground mt-6 mb-4">Dictionary</h3>
+      <h3 className="text-xl font-semibold text-foreground mt-6 mb-4 montserrat-font">Dictionary</h3>
       <ul className="space-y-2">
         {dictionary.map((entry, idx) => (
         <li

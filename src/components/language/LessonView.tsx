@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { languageModules } from "@/lib/languageModules";
 import { generateModuleLessons, useLanguageStore } from "@/stores/languageStore";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { AlertTriangleIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import useActivityStore from "@/stores/activityStore";
 import { errorToast } from "@/hooks/use-toast";
+import { LessonSkeleton } from "./LessonsSkeleton";
 
 export default function LessonView() {
     const [lesson, setLesson] = useState<{ question: string; type: "speech" | "written"; answer: string }[]>([]);
@@ -13,12 +14,15 @@ export default function LessonView() {
     const currentModule = languages.find((l) => l.languageCode === selectedLanguage)?.currentModule;
     const [showAllModules, setShowAllModules] = useState(false);
     const { addLanguageActivity } = useActivityStore();
+    const [isLoading, setIsLoading] = useState(false);
+    const [reload, setReload] = useState(false);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         if (currentModule) {
             generateLesson();
         }
-    }, [currentModule]);
+    }, [currentModule, reload]);
 
     if (showAllModules || !currentModule) {
         return <AllLessons goToLesson={(moduleIndex: number) => {
@@ -30,9 +34,17 @@ export default function LessonView() {
     return (
         <div>
             <h2 className="text-2xl font-semibold text-foreground mb-4">Current Lesson ({currentModule})</h2>
+
             {
-                lesson.length === 0 ? (
-                    <p className="text-sm text-foreground/60">No lesson available. Select a language to start learning.</p>
+                isLoading ? (
+                    <LessonSkeleton />
+                ) : error ? (
+                    <LessonErrorView message={error} onRetry={triggerReload} />
+
+                ) : lesson.length === 0 ? (
+                    <p className="text-sm text-foreground/60">
+                        No lesson available. Select a language to start learning.
+                    </p>
 
                 ) : (
                     <div className="space-y-4">
@@ -69,14 +81,23 @@ export default function LessonView() {
 
     async function generateLesson() {
         if (!selectedLanguage || !currentModule) return;
-        
+        setIsLoading(true)
+
         try {
             const tutLessons = await generateModuleLessons(selectedLanguage, currentModule);
             setLesson(tutLessons);
 
         } catch (err: any) {
             errorToast("Error Generating Lesson", err.message);
+            setError(err.message || 'An unexpected error occurred while loading the lesson.');
+
+        } finally {
+            setIsLoading(false)
         }
+    }
+
+    function triggerReload(){
+        setReload((prev) => !prev);
     }
 
     function saveProgress(moduleIndex: number) {
@@ -102,7 +123,7 @@ export default function LessonView() {
 }
 
 
-const AllLessons = ({ goToLesson }) => {
+const AllLessons = ({ goToLesson }: { goToLesson: (moduleIndex: number) => void }) => {
     const { selectedLanguage } = useLanguageStore();
 
     return (
@@ -135,3 +156,21 @@ const AllLessons = ({ goToLesson }) => {
         </div>
     )
 }
+
+
+function LessonErrorView({ message, onRetry }: { message: string; onRetry: () => void }) {
+    return (
+      <div className="p-4 border border-destructive/40 bg-destructive/10 rounded-lg text-destructive space-y-3">
+        <p className="font-medium flex gap-2 items-center">
+            <AlertTriangleIcon className="w-5 h-5" />
+             Error Loading Lesson
+        </p>
+        <p className="text-sm opacity-80">{message}</p>
+
+        <Button onClick={onRetry} className="mt-2">
+          Reload Lesson
+        </Button>
+      </div>
+    );
+  }
+  
