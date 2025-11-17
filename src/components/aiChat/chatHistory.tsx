@@ -18,7 +18,7 @@ type triggerHandler = {
 
 export const ChatHistory = forwardRef<triggerHandler>((props, ref) => {
   const { activeChat, setActiveChat } = props as ChatHistoryProps;
-  const { chats, loading, addChat, deleteChat, refreshChats } = useChats();
+  const { chats, loaded: loadedChats, loading, addChat, deleteChat, refreshChats } = useChats();
   const { addChatActivity } = useActivityStore();
   const [isOpen, setIsOpen] = useState(false);
   const timePast = (date: Date) => formatDistanceToNow(date, { addSuffix: true });
@@ -26,10 +26,10 @@ export const ChatHistory = forwardRef<triggerHandler>((props, ref) => {
   const emptyChat = chats.find( c => !c.hasMessages && c.name === "New Chat" );
 
   useEffect(() => {
-    if (!loading){
+    if (loadedChats && !emptyChat){
       createNewChat();
     }
-  }, [loading]);
+  }, [loadedChats]);
 
   // Expose functions to parent via ref
   useImperativeHandle(ref, () => ({
@@ -45,12 +45,12 @@ export const ChatHistory = forwardRef<triggerHandler>((props, ref) => {
       {/* Overlay for mobile */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 md:hidden size-dvh z-20"
+          className="fixed inset-0 bg-black/50 md:hidden size-screen z-20 top-0 left-0"
           onClick={() => setIsOpen(false)}
         />
       )}
       <div
-        className={`size-full absolute transition-transform duration-300 ease-in-out md:translate-x-0 w-[calc(100vw-50px)] md:w-full ${isOpen ? "translate-x-0 z-30" : "-translate-x-full"
+        className={`size-full absolute h-screen transition-transform duration-300 ease-in-out md:translate-x-0 w-[calc(100vw-50px)] md:w-full ${isOpen ? "translate-x-0 z-30" : "-translate-x-full"
           }`}
       >
         <div className="size-full flex flex-col gap-2 bg-zinc-200 rounded-lg p-4">
@@ -104,7 +104,7 @@ export const ChatHistory = forwardRef<triggerHandler>((props, ref) => {
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="h-7 w-7 md:opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={(e) => handleDeleteChat(chat.id, e)}
                   >
                     <Trash2Icon className="h-4 w-4" />
@@ -119,7 +119,7 @@ export const ChatHistory = forwardRef<triggerHandler>((props, ref) => {
         {/* Mobile toggle button */}
         <Button
           size="icon"
-          className="absolute md:hidden top-2 left-[calc(100%+10px)]"
+          className="absolute md:hidden shadow-md top-2 left-[calc(100%+10px)]"
           onClick={() => setIsOpen(!isOpen)}
         >
           {
@@ -132,9 +132,10 @@ export const ChatHistory = forwardRef<triggerHandler>((props, ref) => {
     </div>
   );
 
-  async function createNewChat() {
+  async function createNewChat(force?: boolean) {
     const hasUnusedSession = !!emptyChat;
-    if (chats.length && hasUnusedSession) {
+
+    if (!force && chats.length && hasUnusedSession) {
       setActiveChat(emptyChat.id);
       setIsOpen(false);
       return null;
@@ -158,7 +159,9 @@ export const ChatHistory = forwardRef<triggerHandler>((props, ref) => {
   function handleDeleteChat(id, e){
     e.stopPropagation();
     deleteChat(id);
-    createNewChat();
+    if (id === activeChat){
+      createNewChat(true);
+    }
   };
 
 });
