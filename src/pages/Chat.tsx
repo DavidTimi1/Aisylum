@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Mic } from "lucide-react";
+import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { changeChatName, useMessages } from "@/hooks/use-chat";
 import { MessageList } from "@/components/aiChat/messageList";
 import { ChatHistory } from "@/components/aiChat/chatHistory";
-import { errorToast, successToast } from "@/hooks/use-toast";
+import { errorToast } from "@/hooks/use-toast";
 import { generateConversationTitle } from "@/stores/summarizerStore";
 
 export default function Chat() {
@@ -12,11 +12,12 @@ export default function Chat() {
   const [chatID, setChatID] = useState<number>();
   const [newMessage, setSentNewMessage] = useState(false);
   const { messages, sendMessage, isLoading, isResponding, isError } = useMessages(chatID);
-  
+
   const childRef = useRef<{
     refreshChats: () => void,
     sentMessageCallback: () => void
   }>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // set a chat name
   const isFirstConvo = messages.filter(msg => msg.role === 'assistant').length === 1;
@@ -27,10 +28,12 @@ export default function Chat() {
     }
   }, [isFirstConvo, newMessage]);
 
-
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isResponding, isError]);
 
   return (
-    <div className="h-[calc(100vh-5rem)] w-full relative">
+    <div className="h-[calc(100vh-70px)] w-full relative">
       <div className="grid grid-cols-[0fr_2fr] md:grid-cols-[1fr_2fr] h-full">
         <ChatHistory
           activeChat={chatID}
@@ -38,16 +41,16 @@ export default function Chat() {
           ref={childRef}
         />
 
-        <div className="h-full flex flex-col">
-          <div className="flex-1 overflow-y-auto p-4 lg:px-6 space-y-4">
-            <MessageList messages={messages} noPlaceholder={isResponding || isError } />
+        <div className="h-full flex flex-col overflow-hidden pb-1">
+          <div className="flex-1 flex-grow overflow-y-auto p-4 lg:px-6 space-y-4">
+            <MessageList messages={messages} noPlaceholder={isResponding || isError} />
 
             {
               isResponding && (
                 <>
                   <div className="flex justify-end">
                     <div className="max-w-[80%] rounded-md px-4 py-3 bg-accent text-accent-foreground">
-                      <p className="text-sm">{ input }</p>
+                      <p className="text-sm">{input}</p>
                     </div>
                   </div>
 
@@ -65,23 +68,29 @@ export default function Chat() {
             {
               isError && (
                 <>
-                <div className="flex justify-end">
-                  <div className="max-w-[80%] rounded-md px-4 py-3 bg-accent text-accent-foreground">
-                    <p className="text-sm">{ input }</p>
+                  <div className="flex justify-end">
+                    <div className="max-w-[80%] rounded-md px-4 py-3 bg-accent text-accent-foreground">
+                      <p className="text-sm">{input}</p>
+                    </div>
                   </div>
-                </div>
 
-                <div className="border-red-500 bg-red-200 text-red-500 p-2 text-sm flex gap-2 items-center rounded-lg">
-                  <p>There was an error processing your message.</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={resendMessage}
-                  >
-                    Retry
-                  </Button>
-                </div>
+                  <div className="border-red-500 bg-red-200 text-red-500 p-2 text-sm flex gap-2 items-center rounded-lg">
+                    <p>There was an error processing your message.</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={resendMessage}
+                    >
+                      Retry
+                    </Button>
+                  </div>
                 </>
+              )
+            }
+
+            {
+              messages.length > 0 && (
+                <div ref={messagesEndRef} />
               )
             }
 
@@ -143,9 +152,17 @@ export default function Chat() {
       setInput("");
       setSentNewMessage(true);
       childRef.current?.sentMessageCallback();
+      scrollToBottom();
 
     } catch (error) {
       errorToast("Error Sending Message", error.message)
+    }
+  }
+
+  function scrollToBottom() {
+    const scrollHeight = messagesEndRef.current?.parentElement?.scrollHeight;
+    if (scrollHeight !== undefined) {
+      messagesEndRef.current?.parentElement?.scrollTo({ top: scrollHeight, behavior: "smooth" });
     }
   }
 
