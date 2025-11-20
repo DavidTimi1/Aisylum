@@ -2,7 +2,7 @@ import type { Document } from "@/pages/Documents";
 
 // IndexedDB setup and hooks
 const DB_NAME = "Aisylum DB";
-const DB_VERSION = 1.0000001;
+const DB_VERSION = 3;
 
 // Initialize IndexedDB
 export const initDB = () => {
@@ -13,7 +13,7 @@ export const initDB = () => {
     request.onsuccess = () => resolve(request.result);
 
     request.onupgradeneeded = (event) => {
-      const db = event.target.result;
+      const db = event.target.result!;
 
       // Create chats store
       if (!db.objectStoreNames.contains("chats")) {
@@ -22,9 +22,21 @@ export const initDB = () => {
       }
 
       // Create messages store
-      if (!db.objectStoreNames.contains("messages")) {
+      if (db.objectStoreNames.contains("messages")) {
+        const messagesStore = event.target.transaction!.objectStore("messages");
+
+        if (messagesStore.indexNames.contains("chatId")) {
+          messagesStore.deleteIndex("chatId");
+        }
+
+        // CREATE NEW INDEX
+        if (!messagesStore.indexNames.contains("chatID")) {
+          messagesStore.createIndex("chatID", "chatID", { unique: false });
+        }
+
+      } else {
         const messagesStore = db.createObjectStore("messages", { keyPath: "id", autoIncrement: true });
-        messagesStore.createIndex("chatId", "chatId", { unique: false });
+        messagesStore.createIndex("chatID", "chatID", { unique: false });
       }
 
       if (!db.objectStoreNames.contains("vocabulary")) {

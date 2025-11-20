@@ -45,10 +45,25 @@ function getModel({ responseSchema } = {}) {
 /**
  * Helper: run prompt with optional system instruction
  */
-async function runPrompt({ systemInstruction, userPrompt }) {
+async function runPrompt({ systemInstruction, userPrompt, history = [] }) {
   const model = getModel();
+  const contents = [];
+
+  for (const msg of history) {
+    contents.push({
+      role: msg.role,
+      parts: [{ text: msg.content }],
+    });
+  }
+  
+  // Add the latest user message
+  contents.push({
+    role: 'user',
+    parts: [{ text: userPrompt }],
+  });
+
   const result = await model.generateContent({
-    contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+    contents,
     systemInstruction: systemInstruction
       ? { role: 'system', parts: [{ text: systemInstruction }] }
       : undefined,
@@ -63,10 +78,11 @@ async function runPrompt({ systemInstruction, userPrompt }) {
 // Generic Prompt API
 app.post('/api/prompt', async (req, res) => {
   try {
-    const { systemPrompt, prompt } = req.body;
+    const { systemPrompt, prompt, history } = req.body;
     const response = await runPrompt({
       systemInstruction: systemPrompt + " keep responses a bit brief and without any markdown or styles unless explicitly asked for",
       userPrompt: prompt,
+      history
     });
     res.json({ response });
   } catch (error) {
@@ -209,9 +225,9 @@ app.get('/api/health', (req, res) => {
 
 
 // for Vercel
-export default app;
+// export default app;
 
-// const PORT = process.env.PORT || 8000;
-// app.listen(PORT, () => {
-//   console.log(`Server running on port ${PORT}`);
-// });
+const PORT = process.env.PORT || 8000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

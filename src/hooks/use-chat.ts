@@ -108,7 +108,7 @@ export function getMessagesForChat(chatID: number): Promise<Message[]> {
       const db = await initDB();
       const transaction = db.transaction(["messages"], "readonly");
       const store = transaction.objectStore("messages");
-      const index = store.index("chatId");
+      const index = store.index("chatID");
       const request = index.getAll(IDBKeyRange.only(chatID));
 
       request.onsuccess = () => {
@@ -136,7 +136,7 @@ export function chatHasMessages(chatID: number): Promise<boolean> {
       const db = await initDB();
       const transaction = db.transaction(["messages"], "readonly");
       const store = transaction.objectStore("messages");
-      const index = store.index("chatId");
+      const index = store.index("chatID");
       const request = index.count(IDBKeyRange.only(chatID));
 
       request.onsuccess = () => {
@@ -192,6 +192,7 @@ interface Chat {
 export const useChats = () => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
 
   const loadChats = async () => {
 
@@ -211,6 +212,7 @@ export const useChats = () => {
 
         } else {
           setChats(results);
+          setLoaded(true)
         }
       };
 
@@ -248,7 +250,7 @@ export const useChats = () => {
 
       // Delete associated messages
       const messagesStore = transaction.objectStore("messages");
-      const index = messagesStore.index("chatId");
+      const index = messagesStore.index("chatID");
       const request = index.openCursor(IDBKeyRange.only(id));
 
       request.onsuccess = (event) => {
@@ -296,5 +298,5 @@ export const useChats = () => {
     })
   }, []);
 
-  return { chats, loading, addChat, deleteChat, updateChatTimestamp, refreshChats: loadChats };
+  return { chats, loaded, loading, addChat, deleteChat, updateChatTimestamp, refreshChats: loadChats };
 };

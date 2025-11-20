@@ -124,6 +124,12 @@
     @apply bg-background text-foreground;
   }
 }
+:root {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+}
 
 body {
   overscroll-behavior-y: contain;

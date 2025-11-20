@@ -1,6 +1,5 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-console.log('Using API_BASE_URL:', API_BASE_URL);
 
 const fetchAPI = (...args: any[]) => fetch(`${API_BASE_URL}${args[0]}`, ...args.slice(1));
 
