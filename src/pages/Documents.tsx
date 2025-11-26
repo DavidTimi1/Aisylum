@@ -11,6 +11,8 @@ import useActivityStore from '@/stores/activityStore';
 import { createRegularSummary } from '@/stores/summarizerStore';
 import { rewriteClearly } from '@/stores/rewriteStore';
 import { autoTranslate } from '@/stores/languageStore';
+import AIEnvDetection from '@/components/AIEnvDetection';
+import { AI_APIS } from '@/lib/built-in-ai';
 
 // Type definition
 export interface Document {
@@ -60,57 +62,61 @@ const DocumentsPage = () => {
     );
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <DocumentsHeader />
-      <DocumentsActions
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        onUpload={handleUpload}
-      />
-      <DocumentsList
-        documents={filteredDocs}
-        onView={(doc) => {
-          setSelectedDoc(doc);
-          setViewerDialogOpen(true);
-        }}
-        onDelete={handleDelete}
-        onUpload={handleUpload}
-      />
+    <AIEnvDetection required={[ AI_APIS.SUMMARIZER, AI_APIS.TRANSLATOR, AI_APIS.LANGUAGE_DETECTOR ]}>
 
-      {/* Upload progress dialog */}
-      <UploadDialog
-        open={uploadDialogOpen}
-        startRefining={handleRefineClick}
-        setOpen={setUploadDialogOpen}
-        processing={processing}
-      />
-
-      {/* Document viewer */}
-      {selectedDoc && (
-        <DocumentViewerDialog
-          open={viewerDialogOpen}
-          setOpen={setViewerDialogOpen}
-          document={selectedDoc}
-          processing={processing}
-          targetLanguage={targetLanguage}
-          setTargetLanguage={setTargetLanguage}
-          onSummarize={handleSummarize}
-          onTranslate={handleTranslate}
+      <div className="p-6 max-w-6xl mx-auto">
+        <DocumentsHeader />
+        <DocumentsActions
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          onUpload={handleUpload}
         />
-      )}
-    </div>
+        <DocumentsList
+          documents={filteredDocs}
+          onView={(doc) => {
+            setSelectedDoc(doc);
+            setViewerDialogOpen(true);
+          }}
+          onDelete={handleDelete}
+          onUpload={handleUpload}
+        />
+
+        {/* Upload progress dialog */}
+        <UploadDialog
+          open={uploadDialogOpen}
+          startRefining={handleRefineClick}
+          setOpen={setUploadDialogOpen}
+          processing={processing}
+        />
+
+        {/* Document viewer */}
+        {selectedDoc && (
+          <DocumentViewerDialog
+            open={viewerDialogOpen}
+            setOpen={setViewerDialogOpen}
+            document={selectedDoc}
+            processing={processing}
+            targetLanguage={targetLanguage}
+            setTargetLanguage={setTargetLanguage}
+            onSummarize={handleSummarize}
+            onTranslate={handleTranslate}
+          />
+        )}
+      </div>
+
+    </AIEnvDetection>
   );
 
   function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files?.length) return;
-  
+
     Array.from(files).forEach(async (file) => {
       setUploadDialogOpen(true);
       setProcessing({ isProcessing: true, stage: 'extracting', progress: 20, error: '' });
-  
+
       try {
         const text = await extractText(file);
         const newDoc: Document = {
@@ -138,19 +144,19 @@ const DocumentsPage = () => {
   }
 
   function handleRefineClick() {
-    
+
   }
-  
-  async function extractText(file: File){
+
+  async function extractText(file: File) {
     const extractedText = await extractTextFromFile(file);
     return extractedText;
   }
-  
+
   async function handleSummarize(doc: Document) {
     setProcessing({ isProcessing: true, stage: 'summarizing', progress: 30, error: '' });
-  
+
     try {
-      const summary = await createRegularSummary( doc?.extractedText );
+      const summary = await createRegularSummary(doc?.extractedText);
       const updatedDoc = { ...doc, summary };
       await saveDocument(updatedDoc);
 
@@ -168,14 +174,14 @@ const DocumentsPage = () => {
       setProcessing({ isProcessing: false, stage: '', progress: 100, error: '' });
     }
   }
-  
+
   async function handleTranslate(doc: Document, lang: string) {
     setProcessing({ isProcessing: true, stage: 'translating', progress: 40, error: '' });
 
     if (!doc?.extractedText) return
-  
+
     try {
-      const { translation } = await autoTranslate( doc.extractedText, lang );
+      const { translation } = await autoTranslate(doc.extractedText, lang);
       const updatedDoc = { ...doc, translation, targetLanguage: lang };
       await saveDocument(updatedDoc);
 
@@ -193,18 +199,18 @@ const DocumentsPage = () => {
       setProcessing({ isProcessing: false, stage: '', progress: 100, error: '' });
     }
   }
-  
+
   async function handleDelete(id: number) {
     await deleteDocument(id);
     setDocuments((prev) => prev.filter((d) => d.id !== id));
 
     // log activity
-    if ( documentActivity?.docId === id ){
+    if (documentActivity?.docId === id) {
       removeDocumentActivity(id);
     }
     toast.success('Document deleted');
   }
-  
+
 };
 
 export default DocumentsPage;

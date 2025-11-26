@@ -6,6 +6,8 @@ import { MessageList } from "@/components/aiChat/messageList";
 import { ChatHistory } from "@/components/aiChat/chatHistory";
 import { errorToast } from "@/hooks/use-toast";
 import { generateConversationTitle } from "@/stores/summarizerStore";
+import AIEnvDetection from "@/components/AIEnvDetection";
+import { AI_APIS } from "@/lib/built-in-ai";
 
 export default function Chat() {
   const [input, setInput] = useState("");
@@ -33,72 +35,74 @@ export default function Chat() {
   }, [messages, isResponding, isError]);
 
   return (
-    <div className="h-[calc(100dvh-70px)] w-full relative">
-      <div className="grid grid-cols-[0fr_2fr] md:grid-cols-[1fr_2fr] h-full">
-        <ChatHistory
-          activeChat={chatID}
-          setActiveChat={setChatID}
-          ref={childRef}
-        />
+    <AIEnvDetection required={[AI_APIS.PROMPT, AI_APIS.SUMMARIZER]}>
 
-        <div className="h-full flex flex-col overflow-hidden pb-1">
-          <div className="flex-1 flex-grow overflow-y-auto p-4 lg:px-6 space-y-4">
-            <MessageList messages={messages} noPlaceholder={isResponding || isError} />
+      <div className="h-[calc(100dvh-70px)] w-full relative">
+        <div className="grid grid-cols-[0fr_2fr] md:grid-cols-[1fr_2fr] h-full">
+          <ChatHistory
+            activeChat={chatID}
+            setActiveChat={setChatID}
+            ref={childRef}
+          />
 
-            {
-              isResponding && (
-                <>
-                  <div className="flex justify-end">
-                    <div className="max-w-[80%] rounded-md px-4 py-3 bg-accent text-accent-foreground">
-                      <p className="text-sm">{input}</p>
+          <div className="h-full flex flex-col overflow-hidden pb-1">
+            <div className="flex-1 flex-grow overflow-y-auto p-4 lg:px-6 space-y-4">
+              <MessageList messages={messages} noPlaceholder={isResponding || isError} />
+
+              {
+                isResponding && (
+                  <>
+                    <div className="flex justify-end">
+                      <div className="max-w-[80%] rounded-md px-4 py-3 bg-accent text-accent-foreground">
+                        <p className="text-sm">{input}</p>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="bg-zinc-50 rounded-lg p-4">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <div className="bg-zinc-50 rounded-lg p-4">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
                     </div>
-                  </div>
-                </>
-              )
-            }
+                  </>
+                )
+              }
 
-            {
-              isError && (
-                <>
-                  <div className="flex justify-end">
-                    <div className="max-w-[80%] rounded-md px-4 py-3 bg-accent text-accent-foreground">
-                      <p className="text-sm">{input}</p>
+              {
+                isError && (
+                  <>
+                    <div className="flex justify-end">
+                      <div className="max-w-[80%] rounded-md px-4 py-3 bg-accent text-accent-foreground">
+                        <p className="text-sm">{input}</p>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="border-red-500 bg-red-200 text-red-500 p-2 text-sm flex gap-2 items-center rounded-lg">
-                    <p>There was an error processing your message.</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={resendMessage}
-                    >
-                      Retry
-                    </Button>
-                  </div>
-                </>
-              )
-            }
+                    <div className="border-red-500 bg-red-200 text-red-500 p-2 text-sm flex gap-2 items-center rounded-lg">
+                      <p>There was an error processing your message.</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={resendMessage}
+                      >
+                        Retry
+                      </Button>
+                    </div>
+                  </>
+                )
+              }
 
-            {
-              messages.length > 0 && (
-                <div ref={messagesEndRef} />
-              )
-            }
+              {
+                messages.length > 0 && (
+                  <div ref={messagesEndRef} />
+                )
+              }
 
-          </div>
+            </div>
 
-          <form onSubmit={handleSubmit} className="border-t border-border bg-card px-4 py-2 lg:px-6">
-            <div className="flex gap-2 items-end">
-              {/* <Button
+            <form onSubmit={handleSubmit} className="border-t border-border bg-card px-4 py-2 lg:px-6">
+              <div className="flex gap-2 items-end">
+                {/* <Button
                 type="button"
                 variant="outline"
                 size="icon"
@@ -107,32 +111,34 @@ export default function Chat() {
                 <Mic className="h-5 w-5" />
               </Button> */}
 
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Type your question..."
-                disabled={isLoading}
-                className="min-h-10 max-h-32 flex-grow resize-none"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSubmit(e);
-                  }
-                }}
-              />
-              <Button
-                type="submit"
-                size="icon"
-                className="shrink-0"
-                disabled={!input.trim() || isLoading || isResponding}
-              >
-                <Send className="h-5 w-5" />
-              </Button>
-            </div>
-          </form>
+                <textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Type your question..."
+                  disabled={isLoading}
+                  className="min-h-10 max-h-32 flex-grow resize-none"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSubmit(e);
+                    }
+                  }}
+                />
+                <Button
+                  type="submit"
+                  size="icon"
+                  className="shrink-0"
+                  disabled={!input.trim() || isLoading || isResponding}
+                >
+                  <Send className="h-5 w-5" />
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
+
+    </AIEnvDetection>
   );
 
   async function handleSubmit(e: React.FormEvent) {
