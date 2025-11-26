@@ -61,6 +61,10 @@ interface ActivityStore {
         data: ChatActivity | DocumentActivity | LanguageActivity;
     }[];
 
+    allowedRemoteAIs: string[];
+    addAllowedRemoteAI: (aiConfig: string[]) => void;
+    checkAllowedRemoteAI: (aiConfig: string[]) => boolean;
+
     // Clear all activities
     clearAllActivities: () => void;
 }
@@ -76,6 +80,8 @@ const useActivityStore = create<ActivityStore>()(
             chatActivity: null,
             documentActivity: null,
             languageActivity: null,
+
+            allowedRemoteAIs: [],
 
             // User preference actions
             setUsername: (username) =>
@@ -178,6 +184,23 @@ const useActivityStore = create<ActivityStore>()(
                     documentActivity: null,
                     languageActivity: null,
                 }),
+
+            addAllowedRemoteAI: (aiConfig) => {
+                const state = get();
+                const stringedConfig = aiConfig.toString();
+                if (state.allowedRemoteAIs.includes(stringedConfig))
+                    return;
+
+                set({
+                    allowedRemoteAIs: [...state.allowedRemoteAIs, stringedConfig],
+                });
+            },
+
+            checkAllowedRemoteAI: (aiConfig) => {
+                const state = get();
+                const stringedConfig = aiConfig.toString();
+                return state.allowedRemoteAIs.includes(stringedConfig);
+            }
         }),
         
         {
