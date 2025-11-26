@@ -33,7 +33,7 @@ export default function Chat() {
   }, [messages, isResponding, isError]);
 
   return (
-    <div className="h-[calc(100vh-70px)] w-full relative">
+    <div className="h-[calc(100dvh-70px)] w-full relative">
       <div className="grid grid-cols-[0fr_2fr] md:grid-cols-[1fr_2fr] h-full">
         <ChatHistory
           activeChat={chatID}
