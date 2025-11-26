@@ -34,7 +34,13 @@ export enum AI_APIS {
 
 export const checkAIAvailability = async (apiName: string) => {
     const isSupported = apiName in window;
-    const availability = isSupported ? await window[apiName].availability() : 'unavailable';
+    const availability = isSupported ?
+        apiName === AI_APIS.TRANSLATOR ?
+            await window[apiName].availability({
+                sourceLanguage: 'en',   // BCP-47 code of source language (optional)
+                targetLanguage: 'es',   // BCP-47 code of target language (optional)
+            }) :
+            await window[apiName].availability() : 'unavailable';
 
     return availability as AIAvailability;
 };
@@ -360,7 +366,7 @@ export async function createRewriter(
     text: string,
     options: RewriterOptions = {},
     onDownloadProgress?: (progress: number) => void
-){
+) {
     if (!('Rewriter' in window)) {
         throw new Error('Rewriter API not supported');
     }
@@ -414,7 +420,7 @@ export async function rewriteText(
     if (options.sharedContext) {
         rewriterOptions.sharedContext = options.sharedContext;
     }
-    
+
     if (options.language) {
         rewriterOptions.outputLanguage = options.language;
         rewriterOptions.expectedInputLanguage = [options.language];
