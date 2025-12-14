@@ -1,4 +1,4 @@
-# Aisylumu
+# Aisylum
 <img src="public/images/banner%20image.png" alt="Aisylum Banner" width="300" height="300">
 
 
