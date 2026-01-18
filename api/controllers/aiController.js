@@ -72,7 +72,7 @@ export const rewriter = async (req, res, next) => {
         if (tone !== 'as-is') systemInstruction += ` in a ${tone.replace('more-', '')} tone`;
         if (length === 'shorter') systemInstruction += ', making it more concise';
         if (length === 'longer') systemInstruction += ', expanding it with more detail';
-        if (format === 'markdown' && format !== 'as-is') systemInstruction += ', formatted in markdown';
+        if (format === 'markdown') systemInstruction += ', formatted in markdown';
         else if (format === 'plain-text') systemInstruction += ', as plain text';
         if (language) systemInstruction += ` in ${language}`;
         if (sharedContext) systemInstruction += `. Context: ${sharedContext}`;
