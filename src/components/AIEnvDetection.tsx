@@ -6,33 +6,33 @@ import useActivityStore from "@/stores/activityStore";
 
 
 const AIEnvDetection = ({ required = [], children }: {
-    required: string[];
-    children: React.ReactNode;
+  required: string[];
+  children: React.ReactNode;
 }) => {
   const [missingModels, setMissingModels] = useState<string[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const navigateTo = useNavigate();
-  const {checkAllowedRemoteAI, addAllowedRemoteAI} = useActivityStore();
+  const { checkAllowedRemoteAI, addAllowedRemoteAI } = useActivityStore();
 
   useEffect(() => {
     async function detect() {
-      const allStaus = await Promise.all( required.map((model) => {
-            return checkAIAvailability(model);
-        }
+      const allStaus = await Promise.all(required.map((model) => {
+        return checkAIAvailability(model);
+      }
       ));
 
       const missing = required.filter((_, index) => {
         return allStaus[index] !== 'available';
       });
 
-      if (missing.length){
+      if (missing.length) {
         setMissingModels(missing);
         setModalOpen(true);
       }
     }
 
-    if (!checkAllowedRemoteAI(required)){
-        detect();
+    if (!checkAllowedRemoteAI(required)) {
+      detect();
     }
   }, [required]);
 
@@ -47,6 +47,8 @@ const AIEnvDetection = ({ required = [], children }: {
 
   return (
     <>
+      {children}
+
       {modalOpen && (
         <AIWarningModal
           missing={missingModels}
@@ -54,11 +56,6 @@ const AIEnvDetection = ({ required = [], children }: {
           onCancel={handleCancel}
         />
       )}
-
-      {/* Content stays but blurred while warning is open */}
-      <div className={`${modalOpen ? "blur-sm pointer-events-none" : ""}`}>
-        {children}
-      </div>
     </>
   );
 };

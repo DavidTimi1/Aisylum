@@ -1,6 +1,6 @@
 import { SidebarOpenIcon, MessageSquareIcon, Trash2Icon, SidebarCloseIcon, PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { chatHasMessages, useChats } from "@/hooks/use-chat";
+import { useChats } from "@/hooks/use-chat";
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { formatDistanceToNow } from 'date-fns';
 import { rateLimit } from "@/lib/utils";
@@ -21,7 +21,7 @@ export const ChatHistory = forwardRef<triggerHandler>((props, ref) => {
   const { chats, loaded: loadedChats, loading, addChat, deleteChat, refreshChats } = useChats();
   const { addChatActivity } = useActivityStore();
   const [isOpen, setIsOpen] = useState(false);
-  const timePast = (date: Date) => formatDistanceToNow(date, { addSuffix: true });
+  const timePast = (date: Date | number) => formatDistanceToNow(date, { addSuffix: true });
   const activeChatName = chats.find( c => c.id === activeChat )?.name;
   const emptyChat = chats.find( c => !c.hasMessages && c.name === "New Chat" );
 
@@ -156,7 +156,7 @@ export const ChatHistory = forwardRef<triggerHandler>((props, ref) => {
     addChatActivity(activeChat, activeChatName!);
   }
   
-  function handleDeleteChat(id, e){
+  function handleDeleteChat(id: number, e: React.MouseEvent){
     e.stopPropagation();
     deleteChat(id);
     if (id === activeChat){
