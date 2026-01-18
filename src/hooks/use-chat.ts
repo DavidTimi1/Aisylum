@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { IDBPromise, initDB } from "@/lib/db";
 import { useChatSessionStore } from "@/stores/useChatSessionStore";
 
-interface Message {
+export interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: string;
@@ -92,7 +92,7 @@ export function useMessages(chatID: number | undefined) {
 }
 
 
-async function saveMessageToDB(messageObj, chatID){
+async function saveMessageToDB(messageObj: Message, chatID: number){
   const db = await initDB();
   const transaction = db.transaction(["messages"], "readwrite");
   const store = transaction.objectStore("messages");
@@ -125,7 +125,7 @@ export function getMessagesForChat(chatID: number): Promise<Message[]> {
 }
 
 
-export function chatHasMessages(chatID: number): Promise<boolean> {
+export function chatHasMessages(chatID: number | undefined | null): Promise<boolean> {
   return new Promise(async (resolve, reject) => {
     if ([undefined, null].includes(chatID)) {
       resolve(false);
@@ -203,7 +203,7 @@ export const useChats = () => {
       const index = store.index("lastModified");
       const request = index.openCursor(null, "prev"); // Get in descending order
 
-      const results = [];
+      const results = [] as Chat[];
       request.onsuccess = (event) => {
         const cursor = event.target.result;
         if (cursor) {

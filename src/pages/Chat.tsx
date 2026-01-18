@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { changeChatName, useMessages } from "@/hooks/use-chat";
+import { changeChatName, useMessages, type Message } from "@/hooks/use-chat";
 import { MessageList } from "@/components/aiChat/messageList";
 import { ChatHistory } from "@/components/aiChat/chatHistory";
 import { errorToast } from "@/hooks/use-toast";
@@ -37,7 +37,7 @@ export default function Chat() {
   return (
     <AIEnvDetection required={[AI_APIS.PROMPT, AI_APIS.SUMMARIZER]}>
 
-      <div className="h-[calc(100dvh-70px)] w-full relative">
+      <div className="h-full overflow-hidden w-full relative">
         <div className="grid grid-cols-[0fr_2fr] md:grid-cols-[1fr_2fr] h-full">
           <ChatHistory
             activeChat={chatID}
@@ -46,7 +46,7 @@ export default function Chat() {
           />
 
           <div className="h-full flex flex-col overflow-hidden pb-1">
-            <div className="flex-1 flex-grow overflow-y-auto p-4 lg:px-6 space-y-4">
+            <div className="flex-1 grow overflow-y-auto p-4 lg:px-6 space-y-4">
               <MessageList messages={messages} noPlaceholder={isResponding || isError} />
 
               {
@@ -116,7 +116,7 @@ export default function Chat() {
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Type your question..."
                   disabled={isLoading}
-                  className="min-h-10 max-h-32 flex-grow resize-none"
+                  className="min-h-10 max-h-32 grow resize-none"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -160,8 +160,8 @@ export default function Chat() {
       childRef.current?.sentMessageCallback();
       scrollToBottom();
 
-    } catch (error) {
-      errorToast("Error Sending Message", error.message)
+    } catch {
+      errorToast("Error Sending Message")
     }
   }
 
@@ -172,7 +172,7 @@ export default function Chat() {
     }
   }
 
-  async function updateChatName(messages) {
+  async function updateChatName(messages: Message[]) {
     const chatTitle = await generateConversationTitle(messages);
     await changeChatName(chatID!, chatTitle);
     childRef.current?.refreshChats();
